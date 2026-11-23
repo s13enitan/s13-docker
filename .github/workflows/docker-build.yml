@@ -31,3 +31,43 @@ jobs:
         run: |
           docker push "${IMAGE_NAME}:${GITHUB_SHA}"
           docker push "${IMAGE_NAME}:latest"
+
+      - name: Pull pushed image
+        run: docker pull "${IMAGE_NAME}:${GITHUB_SHA}"
+
+      - name: Start container from pushed image
+        run: docker run --detach --name s13-training-camps-ci --publish 127.0.0.1:8080:8080 "${IMAGE_NAME}:${GITHUB_SHA}"
+
+      - name: Check health and show container
+        run: |
+          for attempt in $(seq 1 30); do
+            if health_response=$(curl --fail --silent --max-time 3 http://127.0.0.1:8080/health); then
+              courses_response=$(curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8080/api/courses)
+              printf 'Health response: %s\n' "$health_response"
+              printf 'Courses API response: %s\n' "$courses_response"
+              docker ps --no-trunc --filter name=s13-training-camps-ci
+              docker inspect --format 'Container state: {{.State.Status}}; health: {{.State.Health.Status}}' s13-training-camps-ci
+              docker logs s13-training-camps-ci
+              {
+                echo '## Container smoke test'
+                echo "- Image: \`${IMAGE_NAME}:${GITHUB_SHA}\`"
+                echo "- Health: \`${health_response}\`"
+                echo '- Courses API: returned successfully'
+                echo '- Container status:'
+                echo '```text'
+                docker ps --no-trunc --filter name=s13-training-camps-ci
+                docker inspect --format 'Container state: {{.State.Status}}; health: {{.State.Health.Status}}' s13-training-camps-ci
+                echo '```'
+                echo '- Container logs:'
+                echo '```text'
+                docker logs s13-training-camps-ci
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Container did not become healthy within 60 seconds.' >&2
+          docker ps --all --filter name=s13-training-camps-ci
+          docker logs s13-training-camps-ci
+          exit 1
