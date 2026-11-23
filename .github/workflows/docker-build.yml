@@ -2,6 +2,7 @@ name: Build Docker image
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -36,7 +37,9 @@ jobs:
         run: docker pull "${IMAGE_NAME}:${GITHUB_SHA}"
 
       - name: Start container from pushed image
-        run: docker run --detach --name s13-training-camps-ci --publish 127.0.0.1:8080:8080 "${IMAGE_NAME}:${GITHUB_SHA}"
+        run: |
+          docker network create s13-training-camps-preview
+          docker run --detach --name s13-training-camps-ci --network s13-training-camps-preview --publish 127.0.0.1:8080:8080 "${IMAGE_NAME}:${GITHUB_SHA}"
 
       - name: Check health and show container
         run: |
@@ -71,3 +74,31 @@ jobs:
           docker ps --all --filter name=s13-training-camps-ci
           docker logs s13-training-camps-ci
           exit 1
+
+      - name: Start temporary public preview
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          docker run --detach --network s13-training-camps-preview --name s13-training-camps-tunnel cloudflare/cloudflared:latest tunnel --no-autoupdate --url http://s13-training-camps-ci:8080
+          preview_url=''
+          for attempt in $(seq 1 30); do
+            preview_url=$(docker logs s13-training-camps-tunnel 2>&1 | sed -nE 's#.*(https://[[:alnum:]-]+\.trycloudflare\.com).*#\1#p' | head -n 1)
+            if [ -n "$preview_url" ]; then
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$preview_url" ]; then
+            echo 'Cloudflare Quick Tunnel did not provide a public URL within 60 seconds.' >&2
+            docker logs s13-training-camps-tunnel
+            exit 1
+          fi
+          echo "Temporary public preview: $preview_url"
+          {
+            echo '## Temporary public preview'
+            echo
+            echo "[Open S13 Training Camps]($preview_url)"
+            echo
+            echo 'This link is public and will remain available for 30 minutes while this workflow runs.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Temporary public preview::$preview_url"
+          sleep 1800
