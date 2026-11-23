@@ -15,3 +15,6 @@ jobs:
 
       - name: Build Docker image
         run: docker build --pull --label "org.opencontainers.image.revision=${GITHUB_SHA}" --tag "s13-training-camps:${GITHUB_SHA}" .
+
+      - name: Show built Docker image
+        run: docker image ls --no-trunc --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' "s13-training-camps:${GITHUB_SHA}"

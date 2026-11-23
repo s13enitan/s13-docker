@@ -12,7 +12,7 @@ The `app` container provides everything:
 - Enrollment API
 - File-based demo persistence through the `app-data` Docker volume
 
-The application uses only the Node.js standard library and has no package dependencies. The GitHub Actions workflow builds the Docker image on every branch push using a GitHub-hosted Ubuntu runner. The workflow validates the image build but does not publish the image.
+The application uses only the Node.js standard library and has no package dependencies. The GitHub Actions workflow builds the Docker image on every branch push using a GitHub-hosted Ubuntu runner and prints the image tag, ID, and size in the run log. The workflow does not publish the image.
 
 ## Tools used
 
@@ -50,4 +50,4 @@ Use `docker volume rm s13-training-camps-data` only when you intentionally want 
 
 ## CI/CD
 
-`.github/workflows/docker-build.yml` builds the image on every branch push using GitHub's hosted `ubuntu-24.04` runner. A local commit triggers no workflow until it is pushed. Pull-request events alone do not trigger this push-only workflow. The workflow does not require Docker Hub credentials and does not publish an image.
+`.github/workflows/docker-build.yml` builds the image on every branch push using GitHub's hosted `ubuntu-24.04` runner, then prints the image tag, ID, and size in the run log. A local commit triggers no workflow until it is pushed. Pull-request events alone do not trigger this push-only workflow. The workflow does not require Docker Hub credentials and does not publish an image.
