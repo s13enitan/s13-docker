@@ -3,7 +3,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const port = 8080;
+const port = Number(process.env.PORT) || 8080;
 const publicDir = '/app/public';
 const storeFile = '/data/store.json';
 const jwtSecret = 's13-student-demo-jwt-secret';

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: s13-training-camps-preview
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health

@@ -19,7 +19,7 @@ The application uses only the Node.js standard library and has no package depend
 - HTML5, CSS3, and vanilla JavaScript
 - Node.js 22
 - Docker and Docker Compose
-- GitHub Actions
+- GitHub Actions and Render
 - Git and curl
 
 ## Run
@@ -50,4 +50,8 @@ Use `docker volume rm s13-training-camps-data` only when you intentionally want 
 
 ## CI/CD
 
-`.github/workflows/docker-build.yml` builds the image on every branch push using GitHub's hosted `ubuntu-24.04` runner, prints its tag, ID, and size, then pushes `devopseasylearning/s13-training-camps:<commit-sha>` and `devopseasylearning/s13-training-camps:latest` to Docker Hub. It pulls the SHA-tagged image, starts it in a temporary container on the runner, checks `/health` and `/api/courses`, and adds the container status and logs to the Actions summary. Manually run the workflow with **Actions → Build Docker image → Run workflow** to create a public Cloudflare Quick Tunnel link; the link appears in the Actions summary and expires when the run ends after 30 minutes. Anyone with the link can access the app. The preview is temporary, not a persistent deployment. Configure a Docker Hub access token with write permission as the `DOCKERHUB_TOKEN` Actions repository secret. A local commit triggers no workflow until it is pushed; pull-request events alone do not trigger this workflow.
+`.github/workflows/docker-build.yml` builds the image on every branch push using GitHub's hosted `ubuntu-24.04` runner, prints its tag, ID, and size, then pushes `devopseasylearning/s13-training-camps:<commit-sha>` and `devopseasylearning/s13-training-camps:latest` to Docker Hub. It pulls the SHA-tagged image, starts it in a temporary container on the runner, checks `/health` and `/api/courses`, and adds the container status and logs to the Actions summary. Manually run the workflow with **Actions → Build Docker image → Run workflow** to create a public Cloudflare Quick Tunnel link; the link appears in the Actions summary and expires when the run ends after 30 minutes. GitHub-hosted runners cannot keep this temporary preview alive for 24 hours.
+
+For a longer-lived demo, `render.yaml` defines a free Render web service built from the Dockerfile. Push the repository to GitHub, then create a **Blueprint** in Render and connect this repository; Render will build and publish the service with a stable `onrender.com` URL. The free instance may sleep when idle and take a little time to wake when visited. Its filesystem is ephemeral, so demo registrations and enrollments can be lost when the service restarts or redeploys. The Render service does not automatically expire after 24 hours; delete it from the Render dashboard when the tutoring session is over. Anyone with the URL can use the app, so do not enter real personal data.
+
+Configure a Docker Hub access token with write permission as the `DOCKERHUB_TOKEN` Actions repository secret. A local commit triggers no workflow until it is pushed; pull-request events alone do not trigger this workflow.
